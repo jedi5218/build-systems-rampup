@@ -1,1 +1,0 @@
-project(build-systems-rampup VERSION 1.0)
