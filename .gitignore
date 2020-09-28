@@ -1,6 +1,8 @@
 bin/
 obj/
 .code/
+.vscode/
 Makefile
 CMakeFiles/
 .Makefile.swp
+.Makefile.swo
