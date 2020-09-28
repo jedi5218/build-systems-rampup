@@ -2,6 +2,11 @@
 # _server_objs = main.o
 # server_objs = $(addprefix obj/server/, $(_server_objs))
 
+CFLAGS = \
+    -Wall -Wextra -pedantic -Wformat -Wformat-security\
+    -Wunused-but-set-variable -Wno-deprecated-declarations\
+    -fsanitize=address -fno-omit-frame-pointer
+
 server_objs = $(subst src/,obj/, $(patsubst %.cpp,%.o, $(shell find src/server/ -type f -name *.cpp)))
 client_objs = $(subst src/,obj/, $(patsubst %.cpp,%.o, $(shell find src/client/ -type f -name *.cpp)))
 common_objs = $(subst src/,obj/, $(patsubst %.cpp,%.o, $(shell find src/common/ -type f -name *.cpp)))
