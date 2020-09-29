@@ -1,11 +1,15 @@
 #include <iostream>
-#include "argsparser.hpp"
+#include "argsparser.h"
 int main(int argc, char *argv[])
 {
     Argument port('p', "port", true);
+    Argument ip_addr('i',"ip-addr",true);
+    Argument cow('c', "cow", false);
     ArgsParser parser(
         {
             port,
+            ip_addr,
+            cow
         },
         "The server application.");
     if (parser.parse(argc, argv))
