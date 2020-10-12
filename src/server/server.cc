@@ -4,6 +4,7 @@
 #include <iostream>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <pcap.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -40,6 +41,11 @@ void Server::server_loop(int sockfd)
 
 bool Server::echo(int connfd)
 {
+    char *dev, errbuf[PCAP_ERRBUF_SIZE];
+    pcap_if_t *devs;
+    handle_posix_error(pcap_findalldevs(&devs, errbuf), "Default device lookup");
+    dev = devs->name;
+
     bzero(read_buffer, buffer_size);
     int retval = read(connfd, read_buffer, buffer_size);
     if (retval <= 0)
@@ -51,6 +57,8 @@ bool Server::echo(int connfd)
         return false;
     }
     printf("Message to return: %s\n", write_buffer);
+    strcpy(write_buffer + strlen(write_buffer), " default device: ");
+    strcpy(write_buffer + strlen(write_buffer), dev);
     retval = write(connfd, write_buffer, strlen(write_buffer));
     if (retval <= 0)
     {
