@@ -1,18 +1,36 @@
 #include <iostream>
-#include "argsparser.h"
+#include <string>
+#include <stdexcept>
+
+#include "server.h"
+#include "common/argsparser.h"
 
 int main(int argc, char *argv[])
 {
-    Argument port('p', "port", true);
-    Argument ip_addr('i', "ip-addr", true);
-    Argument cow('c', "cow", false);
-
-    if (!Argument::parse_arguments({port, ip_addr, cow}, argc, argv, "The server application."))
+    Argument port_param('p', "port", true);
+    short port = Server::fallback_port;
+    if (!Argument::parse_arguments({port_param}, argc, argv, "The server application."))
         return 0;
-
-    if (port.is_set())
-        std::cout << "listening on the port" << port.value() << std::endl;
+    if (port_param.is_set())
+        try
+        {
+            port = std::stoi(port_param.value());
+        }
+        catch (const std::invalid_argument &e)
+        {
+            std::cerr << "Port parameter must be a number" << std::endl;
+            return 0;
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr
+                << "Error encountered while reading port number: "
+                << e.what() << std::endl;
+            return 1;
+        }
     else
-        std::cout << "port was not provided, defaulting to 8080" << std::endl;
+        std::cout << "port was not provided, defaulting to " << port << std::endl;
+    Server server(port);
+    server.run();
     return 0;
 }

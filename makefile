@@ -27,16 +27,16 @@ server: $(server_objs) $(common_objs)
 
 obj/client/%.o: src/client/%.cc $(client_headers) $(common_headers)
 	mkdir -p $(dir $@)
-	$(CXX) $(CFLAGS) -c -o $@ $< -I src/common
+	$(CXX) $(CFLAGS) -c -o $@ $< -I src/
 
 obj/server/%.o: src/server/%.cc $(server_headers) $(common_headers)
 	echo $(common_headers)
 	mkdir -p $(dir $@)
-	$(CXX) $(CFLAGS) -c -o $@ $< -I src/common
+	$(CXX) $(CFLAGS) -c -o $@ $< -I src/
 
 obj/common/%.o: src/common/%.cc $(common_headers)
 	mkdir -p $(dir $@)
-	$(CXX) $(CFLAGS) -c -o $@ $< -I src/common
+	$(CXX) $(CFLAGS) -c -o $@ $< -I src/
 
 clean:
 	rm -rf bin/* obj/*
