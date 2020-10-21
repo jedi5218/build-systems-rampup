@@ -7,5 +7,6 @@ set(SERVER_SOURCES
 )
 add_executable(server ${SERVER_INCLUDES} ${SERVER_SOURCES})
 target_link_libraries(server PRIVATE common)
+target_link_libraries(server PRIVATE pthread)
 find_library(LIBPCAP_PATH pcap)
 target_link_libraries(server PRIVATE ${LIBPCAP_PATH})
