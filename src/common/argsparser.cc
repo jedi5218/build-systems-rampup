@@ -96,7 +96,7 @@ std::unique_ptr<option[]> Argument::Argument::make_options_list(const ArgumentLi
     {
         auto argument = arg_ref.get();
         long_options[i++] =
-            {argument.long_name().c_str(),
+            {argument.long_name_str,
              argument.has_parameter() ? required_argument : no_argument,
              nullptr,
              argument.key()};
