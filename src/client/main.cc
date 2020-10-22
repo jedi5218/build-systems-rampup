@@ -14,12 +14,14 @@
 
 int main(int argc, char *argv[])
 {
-    Argument port_param('p', "port", true);
-    Argument echo('s', "string", true);
-    Argument ip_addr('i', "ip-addr", true);
+
+    Argument ip_addr('a', "server-addr", true, "Server ip-address");
+    Argument port_param('p', "server-port", true, "Port of the server");
+    Argument echo('s', "string", true, "Message to send to the server");
+    Argument interactive('i', "interacrive", false, "Run client in interactive mode");
 
     short port = 8080;
-    if (!Argument::parse_arguments({port_param, ip_addr, echo}, argc, argv, "The client application."))
+    if (!Argument::parse_arguments({ip_addr, port_param, echo, interactive}, argc, argv, "The client application."))
         return 0;
     if (port_param.is_set())
         try

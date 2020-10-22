@@ -7,7 +7,7 @@
 
 int main(int argc, char *argv[])
 {
-    Argument port_param('p', "port", true);
+    Argument port_param('p', "port", true, "Port to listen on for client connections");
     short port = Server::fallback_port;
     if (!Argument::parse_arguments({port_param}, argc, argv, "The server application."))
         return 0;
