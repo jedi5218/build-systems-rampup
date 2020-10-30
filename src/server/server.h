@@ -8,6 +8,9 @@
 #include <deque>
 #include <pcap/pcap.h>
 
+#include "thread.h"
+#include "pcap_monitor.h"
+
 #define PREFIX "Server recieved: "
 
 class Server;
@@ -25,30 +28,24 @@ public:
     static const short backlog_size = 5;
     void run();
 
+    PCapThread &pcap_monitor() { return pcap_thread; }
+
 private:
     short port;
     void server_loop(int sockfd);
-    friend class ConnectionThread;
-    std::mutex free_thread_queue_mutex, free_thread_cond_mutex;
-    std::condition_variable connect_condition, free_thread_condition;
-    std::deque<ConnectionThread *> free_threads;
-    void push_free_thread(ConnectionThread *thread);
+    ThreadPool connection_threads_pool;
+    PCapThread pcap_thread;
 };
 
-class ConnectionThread
+class Connection : public ThreadStore
 {
 public:
-    ConnectionThread(Server &parent);
-    void connect(int connfd);
-    bool echo(int connfd);
+    Connection(Server *parent);
+    static Task make(int connfd);
 
 private:
-    std::thread thread;
-    Server &parent;
-    int connfd = 0;
-    std::mutex connfd_mutex, free_thread_cond_mutex;
-    void run();
-
+    Server *parent;
+    bool echo(int connfd);
     const char *prefix = PREFIX;
     static const uint prefix_len = strlen(PREFIX);
     char write_buffer[Server::buffer_size + prefix_len] = {0};
