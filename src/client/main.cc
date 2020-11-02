@@ -96,7 +96,6 @@ bool echo(const char *send, int sockfd)
     char buff[1024];
     bzero(buff, sizeof(buff));
     memcpy(buff, send, sizeof(buff) - 1);
-    //printf("Waiting for server response..");
     int retval = write(sockfd, buff, sizeof(buff));
     if (retval <= 0)
     {
@@ -108,7 +107,6 @@ bool echo(const char *send, int sockfd)
     }
     bzero(buff, sizeof(buff));
     retval = read(sockfd, buff, sizeof(buff));
-    //std::cout << "\r                                                           \r";
     if (retval <= 0)
     {
         if (retval < 0)

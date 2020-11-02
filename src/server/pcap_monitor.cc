@@ -2,8 +2,8 @@
 
 #include <cstring>
 
-#include <common/utils.h>
 #include "packet_structs.h"
+#include <common/utils.h>
 
 void PCapThread::run()
 {

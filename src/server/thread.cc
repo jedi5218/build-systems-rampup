@@ -20,13 +20,10 @@ TaskThread::TaskThread(ThreadPool &pool, ThreadStore *thread_store) : pool(pool)
 
 void TaskThread::run()
 {
-    //printf("Thread 0x%x started\n", std::this_thread::get_id());
     for (;;)
     {
         future_task = pool.push_free_thread();
-        //printf("Thread 0x%x generated a promise\n", std::this_thread::get_id());
         auto task = future_task.get();
-        //printf("Thread 0x%x recieved a task!\n", std::this_thread::get_id());
         task(*thread_store);
     }
 }
@@ -67,14 +64,14 @@ void ThreadPool::run()
             std::unique_lock<std::mutex> guard(new_task_mutex);
             while (tasks.empty())
             {
-                new_task_condition.wait(guard); //, [this]() -> bool { !this->tasks.empty(); });
+                new_task_condition.wait(guard);
             }
         }
         {
             std::unique_lock<std::mutex> guard(free_thread_mutex);
             while (task_promises.empty())
             {
-                free_thread_condition.wait(guard); //, [this]() -> bool { !this->task_promises.empty(); });
+                free_thread_condition.wait(guard);
             }
         }
         auto task = tasks.front();

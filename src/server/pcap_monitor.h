@@ -7,7 +7,6 @@
 #include <mutex>
 #include <utility>
 #include <netinet/in.h>
-//#include <arpa/inet.h>
 #include "thread.h"
 
 class ConnectionDeque
@@ -35,7 +34,6 @@ protected:
 class PCapThread : public Thread
 {
 public:
-    // PCapThread();
     ConnectionDeque &connections() { return tcp_deque; }
 
 protected:

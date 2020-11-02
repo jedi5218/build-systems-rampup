@@ -1,6 +1,6 @@
 #include <iostream>
-#include <string>
 #include <stdexcept>
+#include <string>
 
 #include "server.h"
 #include "common/argsparser.h"
@@ -30,10 +30,6 @@ int main(int argc, char *argv[])
         }
     else
         std::cout << "port was not provided, defaulting to " << port << std::endl;
-
-    // PCapThread t;
-    // t.run();
-    // exit(0);
 
     Server server(port);
     server.run();
