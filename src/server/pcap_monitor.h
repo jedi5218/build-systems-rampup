@@ -13,14 +13,14 @@ class ConnectionDeque
 {
 public:
     std::string compile_report();
-    void add_packet(in_addr src, in_addr dest, u_char src_port, u_char dest_port);
+    void add_packet(in_addr src, in_addr dest, uint16_t src_port, uint16_t dest_port);
 
 protected:
     std::mutex queue_mutex;
     struct Connection
     {
         in_addr src, dest;
-        u_char src_port, dest_port;
+        uint16_t src_port, dest_port;
         bool operator==(const Connection &c) const;
         struct hash
         {

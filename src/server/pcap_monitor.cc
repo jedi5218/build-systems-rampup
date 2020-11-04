@@ -134,19 +134,20 @@ std::string ConnectionDeque::compile_report()
     std::lock_guard<std::mutex> guard(queue_mutex);
     char line_buffer[256] = {0};
     std::string retval;
-    retval += "\nSource\tSource port\tDest.\tDest. port\n";
+    retval += "\nSource\t\tSource port\tDest.\t\tDest. port\n";
     for (const Connection &connection : connections)
     {
-        sprintf(line_buffer, "%s\t%d\t%s\t%d\n\0",
-                inet_ntoa(connection.src),
-                connection.src_port,
-                inet_ntoa(connection.dest),
-                connection.dest_port);
+        int count = snprintf(line_buffer, 256, "%s\t%d\t\t",
+                             inet_ntoa(connection.src),
+                             connection.src_port);
+        snprintf(line_buffer + count, 256 - count, "%s\t%d\n\0",
+                 inet_ntoa(connection.dest),
+                 connection.dest_port);
         retval += line_buffer;
     }
     return retval;
 }
-void ConnectionDeque::add_packet(in_addr src, in_addr dest, u_char src_port, u_char dest_port)
+void ConnectionDeque::add_packet(in_addr src, in_addr dest, uint16_t src_port, uint16_t dest_port)
 {
     ConnectionDeque::Connection conn({src, dest, src_port, dest_port});
     if (!connection_set.count(conn))
@@ -154,7 +155,7 @@ void ConnectionDeque::add_packet(in_addr src, in_addr dest, u_char src_port, u_c
         std::lock_guard<std::mutex> guard(queue_mutex);
         connections.push_front(conn);
         connection_set.insert(conn);
-        if (connections.size() > 100)
+        if (connections.size() > 20)
         {
             connection_set.erase(connections.back());
             connections.pop_back();

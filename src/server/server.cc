@@ -101,8 +101,9 @@ bool Connection::echo(int connfd)
     std::this_thread::sleep_for(std::chrono::seconds(2));
     if (strcmp(write_buffer + prefix_len, "report") == 0)
     {
-        strcpy(write_buffer + strlen(write_buffer),
-               parent->pcap_monitor().connections().compile_report().c_str());
+        strncpy(write_buffer + strlen(write_buffer),
+                parent->pcap_monitor().connections().compile_report().c_str(),
+                Server::buffer_size - strlen(write_buffer));
     }
     printf("Message to return: %s\n", write_buffer);
     strcpy(write_buffer + strlen(write_buffer), read_buffer);
