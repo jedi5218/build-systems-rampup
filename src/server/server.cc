@@ -5,7 +5,6 @@
 #include <iostream>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <pcap.h>
 #include <sys/socket.h>
 #include <thread>
 #include <unistd.h>
@@ -87,10 +86,6 @@ Task Connection::make(int connfd)
 
 bool Connection::echo(int connfd)
 {
-    char *dev, errbuf[PCAP_ERRBUF_SIZE];
-    pcap_if_t *devs;
-    handle_posix_error(pcap_findalldevs(&devs, errbuf), "Default device lookup");
-    dev = devs->name;
 
     bzero(write_buffer + prefix_len, Server::buffer_size);
     int char_count = read(connfd, write_buffer + prefix_len, Server::buffer_size);
@@ -111,8 +106,6 @@ bool Connection::echo(int connfd)
     }
     printf("Message to return: %s\n", write_buffer);
     strcpy(write_buffer + strlen(write_buffer), read_buffer);
-    strcpy(write_buffer + strlen(write_buffer), " default device: ");
-    strcpy(write_buffer + strlen(write_buffer), dev);
     char_count = write(connfd, write_buffer, strlen(write_buffer));
     if (char_count <= 0)
     {
