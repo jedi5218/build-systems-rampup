@@ -1,13 +1,13 @@
 #include <iostream>
-#include <string>
 #include <stdexcept>
+#include <string>
 
 #include "server.h"
 #include "common/argsparser.h"
 
 int main(int argc, char *argv[])
 {
-    Argument port_param('p', "port", true);
+    Argument port_param('p', "port", true, "Port to listen on for client connections");
     short port = Server::fallback_port;
     if (!Argument::parse_arguments({port_param}, argc, argv, "The server application."))
         return 0;
@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
         }
     else
         std::cout << "port was not provided, defaulting to " << port << std::endl;
+
     Server server(port);
     server.run();
     return 0;

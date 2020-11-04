@@ -17,7 +17,7 @@ using ArgumentDict = std::unordered_map<char, std::reference_wrapper<Argument>>;
 class Argument
 {
 public:
-    Argument(char key, const char *long_name, bool has_value);
+    Argument(char key, const char *long_name, bool has_value, const char *description);
     bool has_parameter() const { return has_param; }
     bool is_set() const { return set; }
     std::string value() const { return value_str; }

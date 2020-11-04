@@ -12,15 +12,23 @@
 
 #include "common/argsparser.h"
 
+bool echo(const char *send, int sockfd);
+
 int main(int argc, char *argv[])
 {
-    Argument port_param('p', "port", true);
-    Argument echo('s', "string", true);
-    Argument ip_addr('i', "ip-addr", true);
+
+    Argument ip_addr('a', "server-addr", true, "Server ip-address");
+    Argument port_param('p', "server-port", true, "Port of the server");
+    Argument string_param('s', "string", true, "Message to send to the server. If not provided, client will run in interactive mode");
 
     short port = 8080;
-    if (!Argument::parse_arguments({port_param, ip_addr, echo}, argc, argv, "The client application."))
+    if (!Argument::parse_arguments({ip_addr, port_param, string_param}, argc, argv, "The client application."))
         return 0;
+    if (!ip_addr.is_set())
+    {
+        std::cerr << "IP address must be provided" << std::endl;
+        return 0;
+    }
     if (port_param.is_set())
         try
         {
@@ -66,9 +74,28 @@ int main(int argc, char *argv[])
     }
     else
         printf("connected to the server..\n");
-    char buff[256];
+    if (string_param.is_set())
+        echo(string_param.value().c_str(), sockfd);
+    else
+    {
+        std::string str;
+        do
+        {
+            std::cout << "Client: ";
+            std::getline(std::cin, str);
+        } while (echo(str.c_str(), sockfd));
+    }
+    close(sockfd);
+    return 0;
+}
+
+bool echo(const char *send, int sockfd)
+{
+    if (send == nullptr or send[0] == '\0')
+        return false;
+    char buff[1024];
     bzero(buff, sizeof(buff));
-    memcpy(buff, echo.value().c_str(), sizeof(buff) - 1);
+    memcpy(buff, send, sizeof(buff) - 1);
     int retval = write(sockfd, buff, sizeof(buff));
     if (retval <= 0)
     {
@@ -76,7 +103,7 @@ int main(int argc, char *argv[])
             printf("Unexpected error while sending. id #%i: %s\n", errno, strerror(errno));
         printf("Connection with server was closed before the query was sent.\n");
         close(sockfd);
-        return 0;
+        return false;
     }
     bzero(buff, sizeof(buff));
     retval = read(sockfd, buff, sizeof(buff));
@@ -86,9 +113,10 @@ int main(int argc, char *argv[])
             printf("Unexpected error while recieving. id #%i: %s\n", errno, strerror(errno));
         printf("Connection with server was closed before the response was recieved.\n");
         close(sockfd);
-        return 0;
+        return false;
     }
-    printf("Processed string: %s\n", buff);
-    close(sockfd);
-    return 0;
+    printf("Server response: %s\n", buff);
+    if (std::cin.eof())
+        return false;
+    return true;
 }

@@ -1,6 +1,12 @@
 #include "argsparser.h"
 
-Argument::Argument(char key, const char *long_name, bool has_parameter) : long_name_str(long_name), key_char(key), has_param(has_parameter) {}
+Argument::Argument(char key, const char *long_name,
+                   bool has_parameter, const char *description) : long_name_str(long_name),
+                                                                  key_char(key),
+                                                                  has_param(has_parameter),
+                                                                  description(description)
+{
+}
 
 bool Argument::parse_arguments(ArgumentList arguments, int argc, char *argv[], const char *help_text)
 {
@@ -27,7 +33,21 @@ bool Argument::parse_arguments(ArgumentList arguments, int argc, char *argv[], c
             switch (c)
             {
             case 'h':
-                puts(help_text);
+                printf(
+                    "%s\n%s\n"
+                    "\nUSAGE:\n"
+                    "%s [OPTIONS]\n"
+                    "\nOPTIONS:\n",
+                    argv[0], help_text, argv[0]);
+                for (auto arg : arguments)
+                {
+                    printf(
+                        "\t-%c --%s: %s\n",
+                        arg.get().key(),
+                        arg.get().long_name_str,
+                        arg.get().description);
+                }
+                error = true;
                 break;
 
             case ':':
@@ -40,10 +60,14 @@ bool Argument::parse_arguments(ArgumentList arguments, int argc, char *argv[], c
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 else if (isprint(optopt))
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-                else
+                else if (optopt)
                     fprintf(stderr,
                             "Unknown option character `\\x%x'.\n",
                             optopt);
+                else
+                    fprintf(stderr,
+                            "Parameter '%s' is not recognised.\n",
+                            argv[optind - 1]);
                 error = true;
                 break;
 

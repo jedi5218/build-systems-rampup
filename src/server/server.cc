@@ -1,24 +1,27 @@
 #include "server.h"
 
+#include <chrono>
 #include <cstring>
 #include <iostream>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <pcap.h>
 #include <sys/socket.h>
+#include <thread>
 #include <unistd.h>
 
 #include <common/utils.h>
 
-Server::Server(short port) : port(port)
+Server::Server(short port) : port(port),
+                             connection_threads_pool(std::thread::hardware_concurrency(),
+                                                     [this]() { return new Connection(this); })
 {
-    strcpy(write_buffer, prefix);
+    connection_threads_pool.start();
+    pcap_thread.start();
 }
 
 void Server::server_loop(int sockfd)
 {
     int connfd;
-
     sockaddr_in cli;
     for (;;)
     {
@@ -33,42 +36,8 @@ void Server::server_loop(int sockfd)
         char client_address_str[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &(cli.sin_addr), client_address_str, INET_ADDRSTRLEN);
         printf("Accepted new client at %s:%d\n", client_address_str, ntohs(cli.sin_port));
-
-        while (echo(connfd))
-            ;
+        connection_threads_pool.push_task(Connection::make(connfd));
     }
-}
-
-bool Server::echo(int connfd)
-{
-    char *dev, errbuf[PCAP_ERRBUF_SIZE];
-    pcap_if_t *devs;
-    handle_posix_error(pcap_findalldevs(&devs, errbuf), "Default device lookup");
-    dev = devs->name;
-
-    bzero(read_buffer, buffer_size);
-    int retval = read(connfd, read_buffer, buffer_size);
-    if (retval <= 0)
-    {
-        if (retval < 0)
-            printf("Unexpected error while recieving client query. id #%i: %s\n", errno, strerror(errno));
-        close(connfd);
-        printf("Closing connection.\n");
-        return false;
-    }
-    printf("Message to return: %s\n", write_buffer);
-    strcpy(write_buffer + strlen(write_buffer), " default device: ");
-    strcpy(write_buffer + strlen(write_buffer), dev);
-    retval = write(connfd, write_buffer, strlen(write_buffer));
-    if (retval <= 0)
-    {
-        if (retval < 0)
-            printf("Unexpected error while sending the response. id #%i: %s\n", errno, strerror(errno));
-        close(connfd);
-        printf("Closing connection.\n");
-        return false;
-    }
-    return true;
 }
 
 void Server::run()
@@ -97,4 +66,55 @@ void Server::run()
     server_loop(sockfd);
 
     close(sockfd);
+}
+
+Connection::Connection(Server *parent) : parent(parent)
+{
+    strcpy(write_buffer, prefix);
+    read_buffer = write_buffer + prefix_len;
+}
+
+Task Connection::make(int connfd)
+{
+    return [connfd](ThreadStore &store) {
+        auto connection = static_cast<Connection &>(store);
+        while (connection.echo(connfd))
+            ;
+        close(connfd);
+    };
+}
+
+bool Connection::echo(int connfd)
+{
+
+    bzero(write_buffer + prefix_len, Server::buffer_size);
+    int char_count = read(connfd, write_buffer + prefix_len, Server::buffer_size);
+    if (char_count <= 0)
+    {
+        if (char_count < 0)
+            printf("Unexpected error while recieving client query. id #%i: %s\n", errno, strerror(errno));
+        close(connfd);
+        printf("Closing connection.\n");
+        return false;
+    }
+    std::cout << "Responding to client in thread " << std::hex << std::this_thread::get_id() << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    if (strcmp(write_buffer + prefix_len, "report") == 0)
+    {
+        strncpy(write_buffer + strlen(write_buffer),
+                parent->pcap_monitor().connections().compile_report().c_str(),
+                Server::buffer_size - strlen(write_buffer));
+    }
+    printf("Message to return: %s\n", write_buffer);
+    strcpy(write_buffer + strlen(write_buffer), read_buffer);
+    char_count = write(connfd, write_buffer, strlen(write_buffer));
+    if (char_count <= 0)
+    {
+        if (char_count < 0)
+            printf("Unexpected error while sending the response. id #%i: %s\n", errno, strerror(errno));
+        close(connfd);
+        printf("Closing connection.\n");
+        return false;
+    }
+    return true;
 }
